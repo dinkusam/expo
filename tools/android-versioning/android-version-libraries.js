@@ -101,7 +101,6 @@ ${deps}
 
 repositories {
   mavenCentral()
-  maven { url "https://maven.google.com" }
   google()
   jcenter()
 }
