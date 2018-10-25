@@ -171,7 +171,7 @@ jobs:
           working_directory: ~/expo/tools-public
       - run: nix run nixpkgs.nodejs-8_x -c tools-public/generate-dynamic-macros-android.sh
       - restore_gradle_cache
-      - run
+      - run:
           working_directory: ~/expo/android
           command: nix-shell --run "./gradlew :app:preBuild"
       - run:
