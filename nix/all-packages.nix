@@ -20,51 +20,9 @@ self: super:
       }
       else throw "System ${super.hostPlatform.system} not supported!";
       # Copied in full from upstream package, so ${version} is interpolated correctly
-      buildCommand = let
-        stdenv_32bit = self.pkgsi686Linux.stdenv;
-        zlib_32bit = self.pkgsi686Linux.zlib;
-        ncurses_32bit = self.pkgsi686Linux.ncurses5;
-        ncurses = self.ncurses5;
-      in ''
-        mkdir -p $out/build-tools
-        cd $out/build-tools
-        unzip $src
-        mv android-* ${version}
-
-        cd ${version}
-
-        for f in dx mainDexClasses apksigner; do
-          sed -i -e "s|/bin/ls|${self.coreutils}/bin/ls|" "$f"
-        done
-
-        ${super.lib.optionalString (super.hostPlatform.system == "i686-linux" || super.hostPlatform.system == "x86_64-linux")
-          ''
-            ln -s ${ncurses.out}/lib/libncurses.so.5 `pwd`/lib64/libtinfo.so.5
-
-            find . -type f -print0 | while IFS= read -r -d "" file
-            do
-              type=$(file "$file")
-              ## Patch 64-bit binaries
-              if grep -q "ELF 64-bit" <<< "$type"
-              then
-                if grep -q "interpreter" <<< "$type"
-                then
-                  patchelf --set-interpreter ${self.stdenv.cc.libc.out}/lib/ld-linux-x86-64.so.2 "$file"
-                fi
-                patchelf --set-rpath `pwd`/lib64:${self.stdenv.cc.cc.lib.out}/lib:${self.zlib.out}/lib:${ncurses.out}/lib "$file"
-              ## Patch 32-bit binaries
-              elif grep -q "ELF 32-bit" <<< "$type"
-              then
-                if grep -q "interpreter" <<< "$type"
-                then
-                  patchelf --set-interpreter ${stdenv_32bit.cc.libc.out}/lib/ld-linux.so.2 "$file"
-                fi
-                patchelf --set-rpath ${stdenv_32bit.cc.cc.lib.out}/lib:${zlib_32bit.out}/lib:${ncurses_32bit.out}/lib "$file"
-              fi
-            done
-          ''}
-
-          patchShebangs .
+      buildCommand = oldAttrs.buildCommand + ''
+        cd ..
+        mv ${oldAttrs.version} ${version}
       '';
     });
 

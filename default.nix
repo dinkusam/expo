@@ -8,7 +8,7 @@ let
   #};
   nixpkgs = builtins.fetchTarball {
     url = "https://github.com/nicknovitski/nixpkgs/archive/android-sdk-26-licenses.tar.gz";
-    sha256 = "0zywvbz202hm7qg2792c3csysia83as4a9sphwnhx7l1y7njxbnd";
+    sha256 = "187p7xvs58ss7hbxmbc7i510r9c6ar8lpk7ddb9bm1bxl3zpcsad";
   };
 
 
