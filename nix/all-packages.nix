@@ -6,7 +6,13 @@ self: super:
     androidndk_10e = super.androidenv.androidndk_10e.override { fullNDK=true; };
 
     # prefer consistency with react-native submodule even over updates?
-    buildTools = super.androidenv.buildTools.overrideAttrs (oldAttrs: rec {
+    buildTools = let
+      stdenv_32bit = self.pkgsi686Linux.stdenv;
+      zlib_32bit = self.pkgsi686Linux.zlib;
+      ncurses_32bit = self.pkgsi686Linux.ncurses5;
+      ncurses = self.ncurses5;
+    in
+    super.androidenv.buildTools.overrideAttrs (oldAttrs: rec {
       version = "27.0.3";
       name = "android-build-tools-r${version}";
       src = if (super.hostPlatform.system == "i686-linux" || super.hostPlatform.system == "x86_64-linux")
@@ -30,7 +36,7 @@ self: super:
           ''
             cd ${version}
 
-            ln -s ${self.ncurses.out}/lib/libncurses.so.5 `pwd`/lib64/libtinfo.so.5
+            ln -s ${ncurses.out}/lib/libncurses.so.5 `pwd`/lib64/libtinfo.so.5
 
             find . -type f -print0 | while IFS= read -r -d "" file
             do
@@ -42,15 +48,15 @@ self: super:
                 then
                   patchelf --set-interpreter ${self.stdenv.cc.libc.out}/lib/ld-linux-x86-64.so.2 "$file"
                 fi
-                patchelf --set-rpath `pwd`/lib64:${self.stdenv.cc.cc.lib.out}/lib:${self.zlib.out}/lib:${self.ncurses.out}/lib "$file"
+                patchelf --set-rpath `pwd`/lib64:${self.stdenv.cc.cc.lib.out}/lib:${self.zlib.out}/lib:${ncurses.out}/lib "$file"
               ## Patch 32-bit binaries
               elif grep -q "ELF 32-bit" <<< "$type"
               then
                 if grep -q "interpreter" <<< "$type"
                 then
-                  patchelf --set-interpreter ${self.stdenv_32bit.cc.libc.out}/lib/ld-linux.so.2 "$file"
+                  patchelf --set-interpreter ${stdenv_32bit.cc.libc.out}/lib/ld-linux.so.2 "$file"
                 fi
-                patchelf --set-rpath ${self.stdenv_32bit.cc.cc.lib.out}/lib:${self.zlib_32bit.out}/lib:${self.ncurses_32bit.out}/lib "$file"
+                patchelf --set-rpath ${stdenv_32bit.cc.cc.lib.out}/lib:${zlib_32bit.out}/lib:${ncurses_32bit.out}/lib "$file"
               fi
             done
           ''}
