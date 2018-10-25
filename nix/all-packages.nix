@@ -6,13 +6,7 @@ self: super:
     androidndk_10e = super.androidenv.androidndk_10e.override { fullNDK=true; };
 
     # prefer consistency with react-native submodule even over updates?
-    buildTools = let
-      stdenv_32bit = self.pkgsi686Linux.stdenv;
-      zlib_32bit = self.pkgsi686Linux.zlib;
-      ncurses_32bit = self.pkgsi686Linux.ncurses5;
-      ncurses = self.ncurses5;
-    in
-    super.androidenv.buildTools.overrideAttrs (oldAttrs: rec {
+    buildTools = super.androidenv.buildTools.overrideAttrs (oldAttrs: rec {
       version = "27.0.3";
       name = "android-build-tools-r${version}";
       src = if (super.hostPlatform.system == "i686-linux" || super.hostPlatform.system == "x86_64-linux")
@@ -25,17 +19,26 @@ self: super:
         sha256 = "1mvhsvl0hgbxkkj78f2wc4al7nxjm5x4i98wc63rnsz78fqs8f0j";
       }
       else throw "System ${super.hostPlatform.system} not supported!";
-      # uuuuugh
-      buildCommand = ''
+      # Copied in full from upstream package, so ${version} is interpolated correctly
+      buildCommand = let
+        stdenv_32bit = self.pkgsi686Linux.stdenv;
+        zlib_32bit = self.pkgsi686Linux.zlib;
+        ncurses_32bit = self.pkgsi686Linux.ncurses5;
+        ncurses = self.ncurses5;
+      in ''
         mkdir -p $out/build-tools
         cd $out/build-tools
         unzip $src
         mv android-* ${version}
 
+        cd ${version}
+
+        for f in dx mainDexClasses apksigner; do
+          sed -i -e "s|/bin/ls|${self.coreutils}/bin/ls|" "$f"
+        done
+
         ${super.lib.optionalString (super.hostPlatform.system == "i686-linux" || super.hostPlatform.system == "x86_64-linux")
           ''
-            cd ${version}
-
             ln -s ${ncurses.out}/lib/libncurses.so.5 `pwd`/lib64/libtinfo.so.5
 
             find . -type f -print0 | while IFS= read -r -d "" file
