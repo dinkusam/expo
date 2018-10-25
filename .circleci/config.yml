@@ -178,7 +178,7 @@ jobs:
       - save_gradle_cache
       - run:
           working_directory: ~/expo/android
-          command: nix-shell --run "./gradlew :app:assembleProdMinSdkProdKernelRelease"
+          command: nix-shell --run "./gradlew --stacktrace :app:assembleProdMinSdkProdKernelRelease"
       - run:
           working_directory: ~/expo/android
           command: nix-shell --run "zipalign -v -p 4 app/build/outputs/apk/prodMinSdkProdKernel/release/app-prodMinSdk-prodKernel-release-unsigned.apk app-prod-release-unsigned-aligned.apk"
