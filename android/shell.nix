@@ -1,6 +1,9 @@
 with (import ../. {});
 
 mkShell {
+  LANG="en_US.UTF-8";
+  LANGUAGE="en_US:en";
+  LC_ALL="en_US.UTF-8";
   JVM_OPTS="-Xmx3200m";
   JAVA_HOME=openjdk8;
   ANDROID_HOME="${androidenv.ourSDK}/libexec";
