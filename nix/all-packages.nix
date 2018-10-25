@@ -19,10 +19,24 @@ self: super:
         sha256 = "1mvhsvl0hgbxkkj78f2wc4al7nxjm5x4i98wc63rnsz78fqs8f0j";
       }
       else throw "System ${super.hostPlatform.system} not supported!";
-      # Copied in full from upstream package, so ${version} is interpolated correctly
+      # gradle uses the path to identify the version
       buildCommand = oldAttrs.buildCommand + ''
         cd ..
         mv ${oldAttrs.version} ${version}
+
+        ${super.lib.optionalString (self.hostPlatform.system == "i686-linux" || self.hostPlatform.system == "x86_64-linux")
+          # correct now-invalid rpaths
+          ''
+            find . -type f -print0 | while IFS= read -r -d "" file
+            do
+              type=$(file "$file")
+              ## Patch 64-bit binaries
+              if grep -q "ELF 64-bit" <<< "$type"
+              then
+                patchelf --set-rpath "$(patchelf --print-rpath "$file" | sed 's/${oldAttrs.version}/${version}/')" "$file"
+              fi
+            done
+          ''}
       '';
     });
 
